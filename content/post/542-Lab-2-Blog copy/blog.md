@@ -1,3 +1,7 @@
+---
+date: "2016-05-05T21:48:51-07:00"
+title: Lara's Blog
+---
 Sentiment Analysis of The Weeknd’s Lyrics Using R’s Most Popular
 Lexicons
 ================

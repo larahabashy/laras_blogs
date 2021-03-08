@@ -65,18 +65,19 @@ library(janitor)</code></pre>
 <pre class="r"><code>genius_album(artist=&quot;The Weeknd&quot;, album = &quot;After Hours&quot;) %&gt;%
   filter(is.na(lyric))</code></pre>
 <pre><code>## Joining, by = c(&quot;album_name&quot;, &quot;track_n&quot;, &quot;track_url&quot;)</code></pre>
-<pre><code>## # A tibble: 9 x 4
-##   track_n  line lyric track_title                
-##     &lt;int&gt; &lt;int&gt; &lt;chr&gt; &lt;chr&gt;                      
-## 1       3    43 &lt;NA&gt;  Hardest To Love            
-## 2       5    NA &lt;NA&gt;  Snowchild                  
-## 3       6    NA &lt;NA&gt;  Escape From LA             
-## 4       7    NA &lt;NA&gt;  Heartless                  
-## 5       8    NA &lt;NA&gt;  Faith                      
-## 6       9    NA &lt;NA&gt;  Blinding Lights            
-## 7      11    NA &lt;NA&gt;  Save Your Tears            
-## 8      12    NA &lt;NA&gt;  Repeat After Me (Interlude)
-## 9      13    NA &lt;NA&gt;  After Hours</code></pre>
+<pre><code>## # A tibble: 10 x 4
+##    track_n  line lyric track_title                
+##      &lt;int&gt; &lt;int&gt; &lt;chr&gt; &lt;chr&gt;                      
+##  1       1    NA &lt;NA&gt;  Alone Again                
+##  2       3    NA &lt;NA&gt;  Hardest To Love            
+##  3       5    NA &lt;NA&gt;  Snowchild                  
+##  4       6    NA &lt;NA&gt;  Escape From LA             
+##  5       8    NA &lt;NA&gt;  Faith                      
+##  6       9    NA &lt;NA&gt;  Blinding Lights            
+##  7      10    NA &lt;NA&gt;  In Your Eyes               
+##  8      11    NA &lt;NA&gt;  Save Your Tears            
+##  9      12    NA &lt;NA&gt;  Repeat After Me (Interlude)
+## 10      13    NA &lt;NA&gt;  After Hours</code></pre>
 <p>As such, I will only rely on the tracklists and write a function to loop over the tracklists and grab the lyrics from each, utilizing the <code>genius_lyrics</code> function. I then use the defined function to grab the lyrics from the mixtapes <em>House of Balloons</em> (2011) and <em>Thursday</em> (2011), and the albums <em>After Hours</em> (2019) and <em>Starboy</em> (2018).</p>
 <pre class="r"><code>#get lyrics from album
 get_lyrics &lt;- function(Artist, Album){
@@ -288,7 +289,7 @@ nrc_sentiment  %&gt;%
   ylab(&quot;Proportion&quot;) +
   xlab(&quot;Album Type&quot;) +
   ggtitle(&quot;Sentiment Proportions using the NRC Lexicon&quot;, subtitle = &quot;The Weeknd&#39;s Music&quot;)</code></pre>
-<p><img src="/post/542-Lab-2-Blog/blog_files/figure-html/nrc2-1.png" width="672" /></p>
+<p><img src="/post/542-Lab-2-Blog copy/blog_files/figure-html/nrc2-1.png" width="672" /></p>
 <p>Graphically speaking, it appears that The Weeknd’s music got more negative and sad over time, with albums showing higher occurrences of negatively associated sentiments.</p>
 </div>
 <div id="the-bing-lexicon" class="section level3">
@@ -336,7 +337,7 @@ bing_sentiment %&gt;%
   ylab(&quot;Proportion&quot;) +
   xlab(&quot;Album Type&quot;) +
   ggtitle(&quot;Sentiment Proportions using the Bing Lexicon&quot;, subtitle = &quot;The Weeknd&#39;s Music&quot;)</code></pre>
-<p><img src="/post/542-Lab-2-Blog/blog_files/figure-html/bing2-1.png" width="672" /></p>
+<p><img src="/post/542-Lab-2-Blog copy/blog_files/figure-html/bing2-1.png" width="672" /></p>
 <p>Applying the bing lexicon to the album data and visualizing the proportions of sentiments found in The Weeknd’s music, it becomes more clear to see the overall difference in sentiments across the albums. His latest music, the albums <em>After Hours</em> and <em>Starboy</em> appear to contain more negative lyrics than the earlier released mixtapes from 2011.</p>
 </div>
 <div id="the-afinn-lexicon" class="section level3">
@@ -393,7 +394,7 @@ afinn_sentiment %&gt;%
   ylab(&quot;Proportion&quot;) +
   xlab(&quot;Album Type&quot;) +
   ggtitle(&quot;Sentiment Proportions using the AFINN Lexicon&quot;, subtitle = &quot;The Weeknd&#39;s Music&quot;)</code></pre>
-<p><img src="/post/542-Lab-2-Blog/blog_files/figure-html/afinn2-1.png" width="672" /></p>
+<p><img src="/post/542-Lab-2-Blog copy/blog_files/figure-html/afinn2-1.png" width="672" /></p>
 <p>Here, the AFINN lexicon is allowing us to quantify or measure words to a certain degree. Looking at the visualization above, we can see that the sentiment scores for the albums are generally more negative than the sentiment seen in the mixtapes. For instance, a huge proportion of the words in the albums <em>After Hours</em> and <em>Starboy</em> are assigned a score of -2, whereas mixtapes have more equal proportions for each sentiment. This aligns with the conclusions we derived using the other two lexicons.</p>
 </div>
 </div>
