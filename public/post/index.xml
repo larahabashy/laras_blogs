@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Lara&#39;s Blogs</title>
+    <link>/post/</link>
+    <description>Recent content in Posts on Lara&#39;s Blogs</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language><atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title></title>
+      <link>/1/01/01/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/1/01/01/</guid>
+      <description>Sentiment Analysis of The Weeknd’s Lyrics Using R’s Most Popular Lexicons Lara Habashy 02/03/2021
+ Did The Weeknd Get Sadder? The data Bag of Words Representation (Mixtapes vs. Albums) Sentiment Analysis with tidytext  The NRC Lexicon The Bing Lexicon The AFINN Lexicon   Conclusion References  Did The Weeknd Get Sadder? Since releasing three free mixtapes in 2011 that kick-started his music career and fame, Canadian musician Abel Tesfaye, known by his stage name “The Weeknd”, went on to release many more albums including 4 studio albums.</description>
+    </item>
+    
+  </channel>
+</rss>

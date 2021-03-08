@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.81.0" />
+
+
+<title> - Lara&#39;s Blogs</title>
+<meta property="og:title" content=" - Lara&#39;s Blogs">
+
+
+  <link href='/favicon.ico' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/larahabashy">GitHub</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">15 min read</span>
+    
+
+    <h1 class="article-title"></h1>
+
+    
+    <span class="article-date">0001-01-01</span>
+    
+
+    <div class="article-content">
+      <h1 id="lexicons">Sentiment Analysis of The Weeknd’s Lyrics Using R’s Most Popular
+Lexicons</h1>
+<p>Lara Habashy
+02/03/2021</p>
+<ul>
+<li><a href="#did-the-weeknd-get-sadder">Did The Weeknd Get Sadder?</a></li>
+<li><a href="#the-data">The data</a></li>
+<li><a href="#bag-of-words-representation-mixtapes-vs-albums">Bag of Words Representation (Mixtapes
+vs. Albums)</a></li>
+<li><a href="#sentiment-analysis-with-tidytext">Sentiment Analysis with
+<em>tidytext</em></a>
+<ul>
+<li><a href="#the-nrc-lexicon">The NRC Lexicon</a></li>
+<li><a href="#the-bing-lexicon">The Bing Lexicon</a></li>
+<li><a href="#the-afinn-lexicon">The AFINN Lexicon</a></li>
+</ul>
+</li>
+<li><a href="#conclusion">Conclusion</a></li>
+<li><a href="#references">References</a></li>
+</ul>
+<h2 id="did-the-weeknd-get-sadder">Did The Weeknd Get Sadder?</h2>
+<p>Since releasing three free mixtapes in 2011 that kick-started his music
+career and fame, Canadian musician Abel Tesfaye, known by his stage name
+“The Weeknd”, went on to release many more albums including 4 studio
+albums. He even performed at the Super Bowl this season, a gig usually
+awarded to the best of musicians such as Michael Jackson and Shakira. If
+The Weeknd only got better over the years, I wonder why I still enjoy
+his 2011 mixtapes better. Has The weeknd’s music changed over the past
+decade, or is it possible my taste in music has remained stagnant?</p>
+<p>As an aspiring data scientist, I took it upon myself to investigate,
+using lyrics data, the hypothesis that The Weeknd’s music has changed
+over the past decade. To aid in the analysis, I will use R’s <code>tidytext</code>
+package to perform <em>sentiment analysis</em>. Sentiment analysis is usually
+applied in problems where we’re interested in knowing how people are
+discussing a certain topic, specifically, how they <em>feel</em> about it.
+Using The Weeknd’s lyrics data, we shall find a convenient way of
+extracting sentiment information from the lyrics and analyze the change
+of sentiment across time.</p>
+<h2 id="the-data">The data</h2>
+<p>Begin by importing the following R libraries.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r"><span style="color:#a6e22e">library</span>(tidytext)
+<span style="color:#a6e22e">library</span>(genius)
+<span style="color:#a6e22e">library</span>(pacman)
+<span style="color:#a6e22e">library</span>(tidyverse)
+<span style="color:#a6e22e">library</span>(dplyr)
+<span style="color:#a6e22e">library</span>(genius)
+<span style="color:#a6e22e">library</span>(stringr)
+<span style="color:#a6e22e">library</span>(janitor)
+</code></pre></div><p>We first start by collecting the lyrics from The Weeknd’s first few
+mixtapes and his most recent albums. Using <code>genius_tracklist()</code> from the
+<a href="https://cran.r-project.org/web/packages/genius/genius.pdf"><code>genius</code></a>
+package in R, we obtain tracklists for the albums of interest and
+associated URLs for each track.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r"><span style="color:#a6e22e">genius_tracklist</span>(artist<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;The Weeknd&#34;</span>, album <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;After Hours&#34;</span>)
+</code></pre></div><pre><code>## # A tibble: 14 x 4
+##    album_name  track_title         track_n track_url                            
+##    &lt;chr&gt;       &lt;chr&gt;                 &lt;int&gt; &lt;chr&gt;                                
+##  1 After Hours Alone Again               1 https://genius.com/The-weeknd-alone-…
+##  2 After Hours Too Late                  2 https://genius.com/The-weeknd-too-la…
+##  3 After Hours Hardest To Love           3 https://genius.com/The-weeknd-hardes…
+##  4 After Hours Scared To Live            4 https://genius.com/The-weeknd-scared…
+##  5 After Hours Snowchild                 5 https://genius.com/The-weeknd-snowch…
+##  6 After Hours Escape From LA            6 https://genius.com/The-weeknd-escape…
+##  7 After Hours Heartless                 7 https://genius.com/The-weeknd-heartl…
+##  8 After Hours Faith                     8 https://genius.com/The-weeknd-faith-…
+##  9 After Hours Blinding Lights           9 https://genius.com/The-weeknd-blindi…
+## 10 After Hours In Your Eyes             10 https://genius.com/The-weeknd-in-you…
+## 11 After Hours Save Your Tears          11 https://genius.com/The-weeknd-save-y…
+## 12 After Hours Repeat After Me (I…      12 https://genius.com/The-weeknd-repeat…
+## 13 After Hours After Hours              13 https://genius.com/The-weeknd-after-…
+## 14 After Hours Until I Bleed Out        14 https://genius.com/The-weeknd-until-…
+</code></pre>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r"><span style="color:#a6e22e">genius_tracklist</span>(artist<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;The Weeknd&#34;</span>, album <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;House of Balloons&#34;</span>)
+</code></pre></div><pre><code>## # A tibble: 9 x 4
+##   album_name    track_title            track_n track_url                        
+##   &lt;chr&gt;         &lt;chr&gt;                    &lt;int&gt; &lt;chr&gt;                            
+## 1 House of Bal… High for This                1 https://genius.com/The-weeknd-hi…
+## 2 House of Bal… What You Need                2 https://genius.com/The-weeknd-wh…
+## 3 House of Bal… House of Balloons / G…       3 https://genius.com/The-weeknd-ho…
+## 4 House of Bal… The Morning                  4 https://genius.com/The-weeknd-th…
+## 5 House of Bal… Wicked Games                 5 https://genius.com/The-weeknd-wi…
+## 6 House of Bal… The Party &amp; The After…       6 https://genius.com/The-weeknd-th…
+## 7 House of Bal… Coming Down                  7 https://genius.com/The-weeknd-co…
+## 8 House of Bal… Loft Music                   8 https://genius.com/The-weeknd-lo…
+## 9 House of Bal… The Knowing                  9 https://genius.com/The-weeknd-th…
+</code></pre>
+<p>When attempting to grab the lyrics using genius’s <code>genius_album()</code>, the
+function fails, producing NA’s for the track’s that it was not
+successful in scraping.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r"><span style="color:#a6e22e">genius_album</span>(artist<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;The Weeknd&#34;</span>, album <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;After Hours&#34;</span>) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">filter</span>(<span style="color:#a6e22e">is.na</span>(lyric))
+</code></pre></div><pre><code>## Joining, by = c(&quot;album_name&quot;, &quot;track_n&quot;, &quot;track_url&quot;)
+
+## # A tibble: 9 x 4
+##   track_n  line lyric track_title                
+##     &lt;int&gt; &lt;int&gt; &lt;chr&gt; &lt;chr&gt;                      
+## 1       1    NA &lt;NA&gt;  Alone Again                
+## 2       3    NA &lt;NA&gt;  Hardest To Love            
+## 3       4    NA &lt;NA&gt;  Scared To Live             
+## 4       5    NA &lt;NA&gt;  Snowchild                  
+## 5       6    NA &lt;NA&gt;  Escape From LA             
+## 6       7    NA &lt;NA&gt;  Heartless                  
+## 7       9    NA &lt;NA&gt;  Blinding Lights            
+## 8      12    NA &lt;NA&gt;  Repeat After Me (Interlude)
+## 9      14    NA &lt;NA&gt;  Until I Bleed Out
+</code></pre>
+<p>As such, I will only rely on the tracklists and write a function to loop
+over the tracklists and grab the lyrics from each, utilizing the
+<code>genius_lyrics</code> function. I then use the defined function to grab the
+lyrics from the mixtapes <em>House of Balloons</em> (2011) and <em>Thursday</em>
+(2011), and the albums <em>After Hours</em> (2019) and <em>Starboy</em> (2018).</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r"><span style="color:#75715e">#get lyrics from album</span>
+get_lyrics <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">function</span>(Artist, Album){
+  
+  tracklist <span style="color:#f92672">=</span> <span style="color:#a6e22e">genius_tracklist</span>(artist<span style="color:#f92672">=</span>Artist, album <span style="color:#f92672">=</span> Album)     <span style="color:#75715e"># genius defined function returns tracklists</span>
+  
+  lyrics_list <span style="color:#f92672">=</span> <span style="color:#66d9ef">NULL</span>
+  <span style="color:#a6e22e">for</span>(song_num in <span style="color:#ae81ff">1</span><span style="color:#f92672">:</span><span style="color:#a6e22e">dim</span>(tracklist)[1]){
+    song_length <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>
+    counter <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>     <span style="color:#75715e"># avoid infinite loops</span>
+    
+    <span style="color:#a6e22e">while</span>(song_length<span style="color:#f92672">&lt;=</span><span style="color:#ae81ff">1</span> <span style="color:#f92672">&amp;</span> counter<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">10</span>){
+      counter <span style="color:#f92672">=</span> counter <span style="color:#ae81ff">+1</span>
+      (new_song <span style="color:#f92672">=</span> <span style="color:#a6e22e">genius_lyrics</span>(artist<span style="color:#f92672">=</span>Artist ,song<span style="color:#f92672">=</span> tracklist<span style="color:#f92672">$</span>track_title[song_num])) <span style="color:#75715e"># get lyrics lines</span>
+      <span style="color:#a6e22e">Sys.sleep</span>(<span style="color:#ae81ff">1</span>) <span style="color:#75715e"># avoid overloading</span>
+      song_length <span style="color:#f92672">=</span> <span style="color:#a6e22e">dim</span>(new_song)[1]
+    }
+    lyrics_list <span style="color:#f92672">=</span> <span style="color:#a6e22e">rbind</span>(lyrics_list, new_song) <span style="color:#75715e"># join song names to lyrics</span>
+    lyrics_list <span style="color:#f92672">=</span> <span style="color:#a6e22e">na.omit</span>(lyrics_list)         <span style="color:#75715e"># remove empty lyrics lines</span>
+  }
+  <span style="color:#a6e22e">return</span>(lyrics_list)
+}
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r"><span style="color:#75715e"># get mixtapes lyrics</span>
+mixtape_1 <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">get_lyrics</span>(Artist <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;The Weeknd&#34;</span>, Album <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;House of Balloons&#34;</span>) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">mutate</span>(album <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;House of Balloons&#34;</span>, type <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Mixtape&#34;</span>)
+mixtape_2 <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">get_lyrics</span>(Artist <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;The Weeknd&#34;</span>, Album <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Thursday&#34;</span>) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">mutate</span>(album <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Thursdays&#34;</span>, type <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Mixtape&#34;</span>)
+
+<span style="color:#75715e"># get album lyrics</span>
+album_1 <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">get_lyrics</span>(Artist <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;The Weeknd&#34;</span>, Album <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;After Hours&#34;</span>) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">mutate</span>(album <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;After Hours&#34;</span>, type <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Album&#34;</span>)
+album_2 <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">get_lyrics</span>(Artist <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;The Weeknd&#34;</span>, Album <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Starboy&#34;</span>) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">mutate</span>(album <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Starboy&#34;</span>, type <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Album&#34;</span>)
+
+<span style="color:#75715e"># merge albums and mixtapes lyrics</span>
+albums <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">rbind</span>(album_1, album_2)
+mixtapes <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">rbind</span>(mixtape_1, mixtape_2)
+lyrics <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">rbind</span>(albums, mixtapes)
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r"><span style="color:#a6e22e">head</span>(lyrics)
+</code></pre></div><pre><code>## # A tibble: 6 x 5
+##   track_title  line lyric                                        album     type 
+##   &lt;chr&gt;       &lt;int&gt; &lt;chr&gt;                                        &lt;chr&gt;     &lt;chr&gt;
+## 1 Alone Again     1 Take off my disguise                         After Ho… Album
+## 2 Alone Again     2 I'm living someone else's life               After Ho… Album
+## 3 Alone Again     3 Suppressing who I was inside                 After Ho… Album
+## 4 Alone Again     4 So I throw two thousand ones in the sky      After Ho… Album
+## 5 Alone Again     5 Together we're alone (Together we're alone)  After Ho… Album
+## 6 Alone Again     6 In Vegas, I feel so at home (In Vegas, I fe… After Ho… Album
+</code></pre>
+<h2 id="bag-of-words-representation-mixtapes-vsalbums">Bag of Words Representation (Mixtapes vs. Albums)</h2>
+<p>To analyze the difference in lyrics, let us examine the most common
+words used by The Weeknd in both album categories (Albums and Mixtapes).
+To do this, we will utilize <code>tidytext</code>’s
+<a href="https://www.rdocumentation.org/packages/tidytext/versions/0.3.0/topics/unnest_tokens"><code>unnest_tokens()</code></a>
+with the argument token=“words”. Here, the tokenization process will
+split the songlines into individual words. For example, the line “take
+off my disguise” is split into the following four words: “take”, “off”,
+“my”, “disguise”. This representation of data is known as
+<em>bag-of-words</em>, a representation of text that describes the occurrence
+of words within a specific document.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r">tidy_lyrics <span style="color:#f92672">&lt;-</span> lyrics <span style="color:#f92672">%&gt;%</span> 
+  <span style="color:#a6e22e">select</span>(album, lyric, type)  <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">unnest_tokens</span>(output <span style="color:#f92672">=</span> word, input <span style="color:#f92672">=</span> lyric, token <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;words&#34;</span>) <span style="color:#f92672">%&gt;%</span> <span style="color:#75715e"># tokenize the whole dataset of lyrics</span>
+  <span style="color:#a6e22e">group_by</span>(type, album) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">count</span>(word) <span style="color:#f92672">%&gt;%</span> 
+  <span style="color:#a6e22e">arrange</span>(<span style="color:#a6e22e">desc</span>(n)) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">mutate</span>(album <span style="color:#f92672">=</span> <span style="color:#a6e22e">as.factor</span>(album), type <span style="color:#f92672">=</span> <span style="color:#a6e22e">as.factor</span>(type)) <span style="color:#f92672">%&gt;%</span>    <span style="color:#75715e"># reformatting variable types for plotting purposes</span>
+  <span style="color:#a6e22e">mutate</span>(type <span style="color:#f92672">=</span> <span style="color:#a6e22e">fct_relevel</span>(type, <span style="color:#e6db74">&#34;Mixtape&#34;</span>))
+
+tidy_albums <span style="color:#f92672">&lt;-</span> lyrics <span style="color:#f92672">%&gt;%</span> 
+  <span style="color:#a6e22e">filter</span>(type <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;Album&#34;</span>) <span style="color:#f92672">%&gt;%</span>                                     <span style="color:#75715e"># filter to keep recent music</span>
+  <span style="color:#a6e22e">select</span>(lyric, type)  <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">unnest_tokens</span>(output <span style="color:#f92672">=</span> word,input <span style="color:#f92672">=</span> lyric, token <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;words&#34;</span>) <span style="color:#f92672">%&gt;%</span> <span style="color:#75715e"># tokenize Album lyrics </span>
+  <span style="color:#a6e22e">group_by</span>(type) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">count</span>(word) <span style="color:#f92672">%&gt;%</span>                                                 <span style="color:#75715e"># count occurrences of each word</span>
+  <span style="color:#a6e22e">arrange</span>(<span style="color:#a6e22e">desc</span>(n))                                                <span style="color:#75715e"># sort words by decreasing order in frequency</span>
+
+tidy_albums
+</code></pre></div><pre><code>## # A tibble: 1,289 x 3
+## # Groups:   type [1]
+##    type  word      n
+##    &lt;chr&gt; &lt;chr&gt; &lt;int&gt;
+##  1 Album i       667
+##  2 Album you     456
+##  3 Album the     303
+##  4 Album oh      292
+##  5 Album a       226
+##  6 Album me      224
+##  7 Album to      221
+##  8 Album it      206
+##  9 Album know    205
+## 10 Album i'm     168
+## # … with 1,279 more rows
+</code></pre>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r">tidy_mixtapes <span style="color:#f92672">&lt;-</span> lyrics <span style="color:#f92672">%&gt;%</span> 
+  <span style="color:#a6e22e">filter</span>(type <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;Mixtape&#34;</span>) <span style="color:#f92672">%&gt;%</span>                                   <span style="color:#75715e"># filter to keep older music </span>
+  <span style="color:#a6e22e">select</span>(lyric, type)  <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">unnest_tokens</span>(output <span style="color:#f92672">=</span> word,input <span style="color:#f92672">=</span> lyric, token <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;words&#34;</span>) <span style="color:#f92672">%&gt;%</span> <span style="color:#75715e"># tokenize Mixtapes lyrics</span>
+  <span style="color:#a6e22e">group_by</span>(type) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">count</span>(word) <span style="color:#f92672">%&gt;%</span>                                                 <span style="color:#75715e"># count occurrences of each word</span>
+  <span style="color:#a6e22e">arrange</span>(<span style="color:#a6e22e">desc</span>(n))                                                <span style="color:#75715e"># sort words by decreasing order in frequency</span>
+
+tidy_mixtapes
+</code></pre></div><pre><code>## # A tibble: 910 x 3
+## # Groups:   type [1]
+##    type    word      n
+##    &lt;chr&gt;   &lt;chr&gt; &lt;int&gt;
+##  1 Mixtape you     373
+##  2 Mixtape i       267
+##  3 Mixtape the     194
+##  4 Mixtape it      142
+##  5 Mixtape me      137
+##  6 Mixtape a       107
+##  7 Mixtape i'm      98
+##  8 Mixtape baby     88
+##  9 Mixtape girl     86
+## 10 Mixtape got      83
+## # … with 900 more rows
+</code></pre>
+<p>This representation of the lyrics seems to be a little difficult to
+analyze since both albums and mixtapes have many occurrences of very
+similar common words such as <em>i</em>, <em>you</em>, <em>the</em>, etc. To resolve this
+issue, we can utilize the package <code>tidytext</code> which provides a list of
+English <em>stop words</em>, words that do not add much meaning to a sentence
+such as the, a, and, or, is, etc. Then, using
+<a href="https://dplyr.tidyverse.org/reference/join.html">anti_join</a>, we can
+remove all stop words from both datasets of words mixtapes and albums
+(ie. <code>tidy_mixtapes</code> and <code>tidy_albums</code> ).</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r"><span style="color:#a6e22e">data</span>(stop_words)      <span style="color:#75715e"># load stop words from tidytext</span>
+
+tidy_mixtapes <span style="color:#f92672">%&gt;%</span> 
+  <span style="color:#a6e22e">anti_join</span>(stop_words, by <span style="color:#f92672">=</span> <span style="color:#a6e22e">c</span>(<span style="color:#e6db74">&#34;word&#34;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;word&#34;</span>)) <span style="color:#75715e"># remove stop words from mixtapes lyrics</span>
+</code></pre></div><pre><code>## # A tibble: 643 x 3
+## # Groups:   type [1]
+##    type    word      n
+##    &lt;chr&gt;   &lt;chr&gt; &lt;int&gt;
+##  1 Mixtape baby     88
+##  2 Mixtape girl     86
+##  3 Mixtape la       80
+##  4 Mixtape ooh      69
+##  5 Mixtape yeah     62
+##  6 Mixtape love     55
+##  7 Mixtape bring    34
+##  8 Mixtape woah     34
+##  9 Mixtape money    28
+## 10 Mixtape fun      27
+## # … with 633 more rows
+</code></pre>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r">tidy_albums <span style="color:#f92672">%&gt;%</span> 
+  <span style="color:#a6e22e">anti_join</span>(stop_words, by <span style="color:#f92672">=</span> <span style="color:#a6e22e">c</span>(<span style="color:#e6db74">&#34;word&#34;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;word&#34;</span>)) <span style="color:#75715e"># remove stop words from album lyrics</span>
+</code></pre></div><pre><code>## # A tibble: 990 x 3
+## # Groups:   type [1]
+##    type  word       n
+##    &lt;chr&gt; &lt;chr&gt;  &lt;int&gt;
+##  1 Album yeah     114
+##  2 Album hey      106
+##  3 Album feel      96
+##  4 Album baby      73
+##  5 Album love      73
+##  6 Album na        69
+##  7 Album girl      68
+##  8 Album coming    63
+##  9 Album life      62
+## 10 Album ooh       48
+## # … with 980 more rows
+</code></pre>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r">tidy_lyrics <span style="color:#f92672">&lt;-</span> tidy_lyrics <span style="color:#f92672">%&gt;%</span> 
+  <span style="color:#a6e22e">anti_join</span>(stop_words, by <span style="color:#f92672">=</span> <span style="color:#a6e22e">c</span>(<span style="color:#e6db74">&#34;word&#34;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;word&#34;</span>)) <span style="color:#75715e"># remove stop words from all lyrics</span>
+</code></pre></div><p>After processing the data by removing the stop words, we’re able to get
+a better sense of the important common words used in the lyrics of the
+albums and mixtapes. This will help better differentiate between the two
+album types.</p>
+<h2 id="sentiment-analysis-with-tidytext">Sentiment Analysis with <em>tidytext</em></h2>
+<p>Now that we have the lyrics represented in single words
+(i.e. bag-of-words representation), we can apply <em>lexicons</em> from the
+<code>tidytext</code> package to analyze the overall sentiment in the albums. A
+lexicon is a corpus (a collection of written texts) of words with an
+associated description of the sentiment of each word.</p>
+<p>Let’s examine three popular lexicons given by the <code>tidytext</code> package in
+R.</p>
+<ol>
+<li><strong>nrc</strong> from Saif Mohammad and Peter Turney at the National Research
+Council of Canada</li>
+<li><strong>bing</strong> from Bing Liu and collaborators</li>
+<li><strong>AFINN</strong> from Finn Årup Nielsen</li>
+</ol>
+<p>The idea behind these lexicons is the assignment of <strong>single words</strong> to
+a score, to measure sentiment. The lexicons are made up of a large
+number of English words that are generally assigned into a positive or
+negative category. Some lexicons provide word associations with emotions
+such as anger, sadness, joy, etc.</p>
+<h3 id="the-nrc-lexicon">The NRC Lexicon</h3>
+<p>The NRC lexicon was developed by Saif Mohammad and Peter Turney at the
+National Research Council of Canada where I interned last summer! The
+lexicon provides a corpus of 13,901 words and an associated sentiment to
+each. It splits words into various associated sentiments. For example,
+take the word <em>abandon</em>. The NRC lexicon associates the following
+sentiments to the word abandon: fear, negative, sadness. Although most
+words are assigned a negative or positive sentiment, emotional
+sentiments such as fear, anger, trust, and sadness, are heavily present
+in the NRC lexicon as well!</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r">tidytext<span style="color:#f92672">::</span><span style="color:#a6e22e">get_sentiments</span>(<span style="color:#e6db74">&#34;nrc&#34;</span>)
+</code></pre></div><pre><code>## # A tibble: 13,901 x 2
+##    word        sentiment
+##    &lt;chr&gt;       &lt;chr&gt;    
+##  1 abacus      trust    
+##  2 abandon     fear     
+##  3 abandon     negative 
+##  4 abandon     sadness  
+##  5 abandoned   anger    
+##  6 abandoned   fear     
+##  7 abandoned   negative 
+##  8 abandoned   sadness  
+##  9 abandonment anger    
+## 10 abandonment fear     
+## # … with 13,891 more rows
+</code></pre>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r">tidytext<span style="color:#f92672">::</span><span style="color:#a6e22e">get_sentiments</span>(<span style="color:#e6db74">&#34;nrc&#34;</span>) <span style="color:#f92672">%&gt;%</span> <span style="color:#75715e"># get dictionary of English words by nrc </span>
+  <span style="color:#a6e22e">group_by</span>(sentiment) <span style="color:#f92672">%&gt;%</span>         
+  <span style="color:#a6e22e">count</span>(sentiment) <span style="color:#f92672">%&gt;%</span>             <span style="color:#75715e"># count occurrences of words for each sentiment category</span>
+  <span style="color:#a6e22e">rename</span>(count<span style="color:#f92672">=</span>n) <span style="color:#f92672">%&gt;%</span>  
+  <span style="color:#a6e22e">arrange</span>(<span style="color:#a6e22e">desc</span>(count))             <span style="color:#75715e"># sort in descending order by frequency of words</span>
+</code></pre></div><pre><code>## # A tibble: 10 x 2
+## # Groups:   sentiment [10]
+##    sentiment    count
+##    &lt;chr&gt;        &lt;int&gt;
+##  1 negative      3324
+##  2 positive      2312
+##  3 fear          1476
+##  4 anger         1247
+##  5 trust         1231
+##  6 sadness       1191
+##  7 disgust       1058
+##  8 anticipation   839
+##  9 joy            689
+## 10 surprise       534
+</code></pre>
+<p>Let us visualize the proportions of nrc lexicon provided sentiments on
+our lyrics data.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r">nrc_sentiment <span style="color:#f92672">&lt;-</span> tidy_lyrics <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">inner_join</span>(<span style="color:#a6e22e">get_sentiments</span>(<span style="color:#e6db74">&#34;nrc&#34;</span>)) <span style="color:#f92672">%&gt;%</span> <span style="color:#75715e"># only keep words that exist in nrc corpus, with associated sentiment</span>
+  <span style="color:#a6e22e">group_by</span>(type, album) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">count</span>(sentiment) 
+</code></pre></div><pre><code>## Joining, by = &quot;word&quot;
+</code></pre>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r"><span style="color:#75715e"># proportions plot</span>
+nrc_sentiment  <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">ggplot</span>(<span style="color:#a6e22e">aes</span>(fill<span style="color:#f92672">=</span>sentiment, y<span style="color:#f92672">=</span>n, x<span style="color:#f92672">=</span>album)) <span style="color:#f92672">+</span> 
+  <span style="color:#a6e22e">geom_bar</span>(position<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;fill&#34;</span>, stat<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;identity&#34;</span>) <span style="color:#f92672">+</span>
+  <span style="color:#a6e22e">facet_wrap</span>(<span style="color:#f92672">~</span>type,scales <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;free&#34;</span>) <span style="color:#f92672">+</span>
+  <span style="color:#a6e22e">ylab</span>(<span style="color:#e6db74">&#34;Proportion&#34;</span>) <span style="color:#f92672">+</span>
+  <span style="color:#a6e22e">xlab</span>(<span style="color:#e6db74">&#34;Album Type&#34;</span>) <span style="color:#f92672">+</span>
+  <span style="color:#a6e22e">ggtitle</span>(<span style="color:#e6db74">&#34;Sentiment Proportions using the NRC Lexicon&#34;</span>, subtitle <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;The Weeknd&#39;s Music&#34;</span>)
+</code></pre></div><p><img src="blog_files/figure-gfm/nrc2-1.png" alt=""><!-- raw HTML omitted --></p>
+<p>Graphically speaking, it appears that The Weeknd’s music got more
+negative and sad over time, with albums showing higher occurrences of
+negatively associated sentiments.</p>
+<h3 id="the-bing-lexicon">The Bing Lexicon</h3>
+<p>The second lexicon from <code>tidytext</code> is the bing lexicon. The bing
+lexicon, from Bing Liu and collaborators, categorizes words in binary
+categories of positive and negative.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r">tidytext<span style="color:#f92672">::</span><span style="color:#a6e22e">get_sentiments</span>(<span style="color:#e6db74">&#34;bing&#34;</span>)
+</code></pre></div><pre><code>## # A tibble: 6,786 x 2
+##    word        sentiment
+##    &lt;chr&gt;       &lt;chr&gt;    
+##  1 2-faces     negative 
+##  2 abnormal    negative 
+##  3 abolish     negative 
+##  4 abominable  negative 
+##  5 abominably  negative 
+##  6 abominate   negative 
+##  7 abomination negative 
+##  8 abort       negative 
+##  9 aborted     negative 
+## 10 aborts      negative 
+## # … with 6,776 more rows
+</code></pre>
+<p>Counting the frequency of sentiments in the corpus provided by the bing
+lexicon, we see that there are 4781 words labelled as negative and 2005
+words labelled as positive.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r">tidytext<span style="color:#f92672">::</span><span style="color:#a6e22e">get_sentiments</span>(<span style="color:#e6db74">&#34;bing&#34;</span>) <span style="color:#f92672">%&gt;%</span>  <span style="color:#75715e"># get dictionary of English words by bing </span>
+  <span style="color:#a6e22e">group_by</span>(sentiment) <span style="color:#f92672">%&gt;%</span> 
+  <span style="color:#a6e22e">count</span>(sentiment) <span style="color:#f92672">%&gt;%</span>               <span style="color:#75715e"># count occurrences of words for each sentiment category</span>
+  <span style="color:#a6e22e">rename</span>(count<span style="color:#f92672">=</span>n) <span style="color:#f92672">%&gt;%</span> 
+  <span style="color:#a6e22e">arrange</span>(<span style="color:#a6e22e">desc</span>(count))               <span style="color:#75715e"># sort in descending order by frequency of words</span>
+</code></pre></div><pre><code>## # A tibble: 2 x 2
+## # Groups:   sentiment [2]
+##   sentiment count
+##   &lt;chr&gt;     &lt;int&gt;
+## 1 negative   4781
+## 2 positive   2005
+</code></pre>
+<p>Next, we can visualize how much of each album’s contents are positive
+and how much are negative, according to the bing lexicon.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r">bing_sentiment <span style="color:#f92672">&lt;-</span> tidy_lyrics <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">inner_join</span>(<span style="color:#a6e22e">get_sentiments</span>(<span style="color:#e6db74">&#34;bing&#34;</span>)) <span style="color:#f92672">%&gt;%</span> <span style="color:#75715e"># only keep words that exist in bing corpus, with associated sentiment</span>
+  <span style="color:#a6e22e">group_by</span>(type, album) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">count</span>(sentiment) <span style="color:#f92672">%&gt;%</span>                  <span style="color:#75715e"># count occurrences of words for each sentiment category</span>
+  <span style="color:#a6e22e">mutate</span>(value <span style="color:#f92672">=</span> <span style="color:#a6e22e">as.factor</span>(sentiment))
+</code></pre></div><pre><code>## Joining, by = &quot;word&quot;
+</code></pre>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r"><span style="color:#75715e"># proportions plot</span>
+bing_sentiment <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">ggplot</span>(<span style="color:#a6e22e">aes</span>(fill<span style="color:#f92672">=</span>sentiment, y<span style="color:#f92672">=</span>n, x<span style="color:#f92672">=</span>album), color<span style="color:#f92672">=</span>sentiment)<span style="color:#f92672">+</span> 
+  <span style="color:#a6e22e">geom_bar</span>(position<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;fill&#34;</span>, stat<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;identity&#34;</span>) <span style="color:#f92672">+</span>
+  <span style="color:#a6e22e">facet_wrap</span>(<span style="color:#f92672">~</span>type,scales <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;free&#34;</span>) <span style="color:#f92672">+</span>
+  <span style="color:#a6e22e">ylab</span>(<span style="color:#e6db74">&#34;Proportion&#34;</span>) <span style="color:#f92672">+</span>
+  <span style="color:#a6e22e">xlab</span>(<span style="color:#e6db74">&#34;Album Type&#34;</span>) <span style="color:#f92672">+</span>
+  <span style="color:#a6e22e">ggtitle</span>(<span style="color:#e6db74">&#34;Sentiment Proportions using the Bing Lexicon&#34;</span>, subtitle <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;The Weeknd&#39;s Music&#34;</span>)
+</code></pre></div><p><img src="blog_files/figure-gfm/bing2-1.png" alt=""><!-- raw HTML omitted --></p>
+<p>Applying the bing lexicon to the album data and visualizing the
+proportions of sentiments found in The Weeknd’s music, it becomes more
+clear to see the overall difference in sentiments across the albums. His
+latest music, the albums <em>After Hours</em> and <em>Starboy</em> appear to contain
+more negative lyrics than the earlier released mixtapes from 2011.</p>
+<h3 id="the-afinn-lexicon">The AFINN Lexicon</h3>
+<p>The third popular lexicon is the AFINN lexicon, developed by Finn Årup
+Nielsen between 2009 and 2011. The AFINN lexicon assigns words with a
+score between -5 and 5, with negative scores indicating negative
+sentiment and positive scores indicating positive sentiment. No words
+are assigned a score of 0. The lexicon has 2,477 words, some of which
+overlap with the bing lexicon, and each word has a value for how
+positive or negative the word might be.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r">tidytext<span style="color:#f92672">::</span><span style="color:#a6e22e">get_sentiments</span>(<span style="color:#e6db74">&#34;afinn&#34;</span>)
+</code></pre></div><pre><code>## # A tibble: 2,477 x 2
+##    word       value
+##    &lt;chr&gt;      &lt;dbl&gt;
+##  1 abandon       -2
+##  2 abandoned     -2
+##  3 abandons      -2
+##  4 abducted      -2
+##  5 abduction     -2
+##  6 abductions    -2
+##  7 abhor         -3
+##  8 abhorred      -3
+##  9 abhorrent     -3
+## 10 abhors        -3
+## # … with 2,467 more rows
+</code></pre>
+<p>The AFINN lexicon has the majority of words associated with a negative
+score, -2 in this case.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r">tidytext<span style="color:#f92672">::</span><span style="color:#a6e22e">get_sentiments</span>(<span style="color:#e6db74">&#34;afinn&#34;</span>) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">group_by</span>(value) <span style="color:#f92672">%&gt;%</span> 
+  <span style="color:#a6e22e">count</span>(value) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">rename</span>(sentiment<span style="color:#f92672">=</span>value, count<span style="color:#f92672">=</span>n)
+</code></pre></div><pre><code>## # A tibble: 11 x 2
+## # Groups:   sentiment [11]
+##    sentiment count
+##        &lt;dbl&gt; &lt;int&gt;
+##  1        -5    16
+##  2        -4    43
+##  3        -3   264
+##  4        -2   966
+##  5        -1   309
+##  6         0     1
+##  7         1   208
+##  8         2   448
+##  9         3   172
+## 10         4    45
+## 11         5     5
+</code></pre>
+<p>Using <code>inner_join</code> once again with the AFINN lexicon on our lyrics data,
+we can create a visualization of proportions for the sentiment
+categories -5, -4, -3, -2, -1, 1, 2, 3, 4, and 5.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r">afinn_sentiment <span style="color:#f92672">&lt;-</span> tidy_lyrics <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">inner_join</span>(<span style="color:#a6e22e">get_sentiments</span>(<span style="color:#e6db74">&#34;afinn&#34;</span>)) <span style="color:#f92672">%&gt;%</span> <span style="color:#75715e"># only keep words that exist in afinn corpus, with associated sentiment</span>
+  <span style="color:#a6e22e">group_by</span>(type, album) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">count</span>(value) <span style="color:#f92672">%&gt;%</span>                       <span style="color:#75715e"># count frequency of words with associated sentiments for each word</span>
+  <span style="color:#a6e22e">mutate</span>(value <span style="color:#f92672">=</span> <span style="color:#a6e22e">as.factor</span>(value)) <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">rename</span>(sentiment<span style="color:#f92672">=</span>value)
+</code></pre></div><pre><code>## Joining, by = &quot;word&quot;
+</code></pre>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-r" data-lang="r"><span style="color:#75715e"># proportions plot</span>
+afinn_sentiment <span style="color:#f92672">%&gt;%</span>
+  <span style="color:#a6e22e">ggplot</span>(<span style="color:#a6e22e">aes</span>(fill<span style="color:#f92672">=</span>sentiment, y<span style="color:#f92672">=</span>n, x<span style="color:#f92672">=</span>album), color<span style="color:#f92672">=</span>sentiment)<span style="color:#f92672">+</span> 
+  <span style="color:#a6e22e">geom_bar</span>(position<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;fill&#34;</span>, stat<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;identity&#34;</span>) <span style="color:#f92672">+</span>
+  <span style="color:#a6e22e">facet_wrap</span>(<span style="color:#f92672">~</span>type,scales <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;free&#34;</span>) <span style="color:#f92672">+</span>
+  <span style="color:#a6e22e">ylab</span>(<span style="color:#e6db74">&#34;Proportion&#34;</span>) <span style="color:#f92672">+</span>
+  <span style="color:#a6e22e">xlab</span>(<span style="color:#e6db74">&#34;Album Type&#34;</span>) <span style="color:#f92672">+</span>
+  <span style="color:#a6e22e">ggtitle</span>(<span style="color:#e6db74">&#34;Sentiment Proportions using the AFINN Lexicon&#34;</span>, subtitle <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;The Weeknd&#39;s Music&#34;</span>)
+</code></pre></div><p><img src="blog_files/figure-gfm/afinn2-1.png" alt=""><!-- raw HTML omitted --></p>
+<p>Here, the AFINN lexicon is allowing us to quantify or measure words to a
+certain degree. Looking at the visualization above, we can see that the
+sentiment scores for the albums are generally more negative than the
+sentiment seen in the mixtapes. For instance, a huge proportion of the
+words in the albums <em>After Hours</em> and <em>Starboy</em> are assigned a score of
+-2, whereas mixtapes have more equal proportions for each sentiment.
+This aligns with the conclusions we derived using the other two
+lexicons.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Based on the proportions visualizations from all three lexicons from
+<code>tidytext</code>, it appears The Weeknd’s music got more negative and sad
+since 2011. It is rumored that The Weeknd has been going through
+romantic hardships which perhaps could be the reason for his music
+getting sadder. Or perhaps fame is the reason? There is much more to
+investigate!</p>
+<p>Although we were not able to reach a definitive conclusion regarding
+whether there is a quantifiable significant difference in The Weeknd’s
+albums and mixtapes, we obtained some evidence to support my initial
+suspicion. With grounds for further research, I will need to perform
+hypothesis testing to determine whether both albums and mixtapes have
+different sentiment distributions. Also, since the meanings of words
+change over time, we may consider creating our own lexicon for music
+applications. Stay tuned!</p>
+<h2 id="references">References</h2>
+<p><a href="https://www.tidytextmining.com/sentiment.html">https://www.tidytextmining.com/sentiment.html</a> <!-- raw HTML omitted -->
+<a href="https://dplyr.tidyverse.org/reference/join.html">https://dplyr.tidyverse.org/reference/join.html</a> <!-- raw HTML omitted -->
+<a href="https://cran.r-project.org/web/packages/tidytext/vignettes/tidytext.html">https://cran.r-project.org/web/packages/tidytext/vignettes/tidytext.html</a>
+<!-- raw HTML omitted --> <a href="https://cran.r-project.org/web/packages/genius/index.html">https://cran.r-project.org/web/packages/genius/index.html</a> <!-- raw HTML omitted -->
+<a href="https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html">https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html</a>
+<!-- raw HTML omitted --> <a href="https://cran.r-project.org/web/packages/ggplot2/index.html">https://cran.r-project.org/web/packages/ggplot2/index.html</a> <!-- raw HTML omitted -->
+<a href="http://corpustext.com/reference/sentiment_afinn.html">http://corpustext.com/reference/sentiment_afinn.html</a></p>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" alt="Img link to Hugo website" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+
